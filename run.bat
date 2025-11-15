@@ -1,0 +1,1 @@
+newman run "Restful-booker Project.postman_collection.json" -e "Restful-booker_Testing.postman_environment.json" --reporters=cli,htmlextra

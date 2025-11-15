@@ -1,0 +1,1659 @@
+{
+	"info": {
+		"_postman_id": "7a39afea-f808-4a7c-a7d2-8b544dd73270",
+		"name": "Restful-booker Project",
+		"description": "> The **Restful-Booker API** is a lightweight, open-source playground service designed for practicing and demonstrating RESTful API testing. It simulates a hotel booking system, providing endpoints to create, read, update, and delete booking records. This makes it ideal for QA engineers, automation testers, and developers to validate their skills in API automation, authentication handling, and CRUD operations. \n  \n\nLink:[https://restful-booker.herokuapp.com/apidoc/index.html](https://restful-booker.herokuapp.com/apidoc/index.html)\n\n<img src=\"https://content.pstmn.io/624aeaa5-e36a-4bdb-8142-db08c8569d65/ZG93bmxvYWQucG5n\">",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "30343558",
+		"_collection_link": "https://testing-team-0585.postman.co/workspace/0094e6d8-8edd-4658-a2e0-5cdfcd87c102/collection/30343558-7a39afea-f808-4a7c-a7d2-8b544dd73270?action=share&source=collection_link&creator=30343558"
+	},
+	"item": [
+		{
+			"name": "01 Auth",
+			"item": [
+				{
+					"name": "01.1 CreateToken",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Reset index if not set",
+									"if (!pm.collectionVariables.get(\"index\")) {",
+									"    pm.collectionVariables.set(\"index\", 0);",
+									"}",
+									"// Define login test cases",
+									"let testCases = [",
+									"  { username: \"admin\", password: \"password123\", expected_status: 200, expected_result: \"Valid login\" },",
+									"  { username: \"admin\", password: \"wrongpass\", expected_status: 401, expected_result: \"Invalid password\" },",
+									"  { username: \"wronguser\", password: \"password123\", expected_status: 401, expected_result: \"Invalid username\" },",
+									"  { username: \"\", password: \"\", expected_status: 400, expected_result: \"Missing credentials\" }",
+									"];",
+									"// Get current index",
+									"let index = parseInt(pm.collectionVariables.get(\"index\"));",
+									"// If index is within range, set variables",
+									"if (index < testCases.length) {",
+									"    let current = testCases[index];",
+									"    pm.collectionVariables.set(\"username\", current.username);",
+									"    pm.collectionVariables.set(\"password\", current.password);",
+									"    pm.collectionVariables.set(\"expected_status\", current.expected_status);",
+									"    pm.collectionVariables.set(\"expected_result\", current.expected_result);",
+									"    pm.collectionVariables.set(\"index\", index + 1); // Prepare for next run",
+									"    postman.setNextRequest(pm.info.requestName); // Loop to same request",
+									"} else {",
+									"    pm.collectionVariables.unset(\"index\"); // Clean up",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Response Handling\r",
+									"const jsonData = pm.response.json();\r",
+									"const token = jsonData.token;\r",
+									"// Save token in collection variable\r",
+									"pm.collectionVariables.set(\"token\", token);\r",
+									"\r",
+									"// Response Validations\r",
+									"pm.test(\"F01 Req01 TC01 - Validate response contains token property\", () => {\r",
+									"    pm.expect(jsonData).to.have.property(\"token\");\r",
+									"});\r",
+									"pm.test(\"F01 Req01 TC02 - Validate token is a string\", () => {\r",
+									"    pm.expect(token).to.be.a(\"string\");\r",
+									"});\r",
+									"pm.test(\"F01 Req01 TC03 - Validate token length is 15 characters\", () => {\r",
+									"    pm.expect(token).to.have.lengthOf(15);\r",
+									"});\r",
+									"pm.test(\"F01 Req01 TC04 - Validate token is not empty\", () => {\r",
+									"    pm.expect(token).to.not.be.empty;\r",
+									"});\r",
+									"pm.test(\"F01 Req01 TC05 - Validate token is not null\", () => {\r",
+									"    pm.expect(token).to.not.be.null;\r",
+									"});\r",
+									"pm.test(\"F01 Req01 TC06 - Validate token is not undefined\", () => {\r",
+									"    pm.expect(token).to.not.be.undefined;\r",
+									"});\r",
+									"// Type Validations\r",
+									"pm.test(\"F01 Req01 TC07 - Validate token is not a number\", () => {\r",
+									"    pm.expect(token).to.not.be.a(\"number\");\r",
+									"});\r",
+									"\r",
+									"pm.test(\"F01 Req01 TC08 - Validate token contains at least one letter and one digit\", () => {\r",
+									"    pm.expect(validateToken(token)).to.be.true;\r",
+									"});\r",
+									"pm.test(\"F01 Req01 TC09 - Validate token is alphanumeric only\", () => {\r",
+									"    pm.expect(token).to.match(/^[A-Za-z0-9]+$/);\r",
+									"});\r",
+									"// Response Meta Validations\r",
+									"pm.test(\"F01 Req01 TC10 - Validate response status code matches expected\", () => {\r",
+									"    pm.expect(pm.response.code).to.eql(pm.collectionVariables.get(\"expected_status\"));\r",
+									"});\r",
+									"\r",
+									"pm.test(\"F01 Req01 TC11 - Validate response time is under 1000ms\", () => {\r",
+									"    pm.expect(pm.response.responseTime).to.be.below(1000);\r",
+									"});\r",
+									"// Helper Function\r",
+									"function validateToken(token) {\r",
+									"    if (typeof token !== \"string\") return false;\r",
+									"    const regex = /^(?=.*[A-Za-z])(?=.*\\d).+$/;\r",
+									"    return regex.test(token);\r",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"strictSSL": true
+					},
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"username\": \"{{username}}\",\r\n  \"password\": \"{{password}}\"\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/auth",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"auth"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "01.1 CreateToken",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"username\": \"\",\r\n  \"password\": \"\"\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "https://restful-booker.herokuapp.com/auth",
+									"protocol": "https",
+									"host": [
+										"restful-booker",
+										"herokuapp",
+										"com"
+									],
+									"path": [
+										"auth"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "Content-Length",
+									"value": "27"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "Date",
+									"value": "Sat, 15 Nov 2025 07:00:38 GMT"
+								},
+								{
+									"key": "Etag",
+									"value": "W/\"1b-8LfqRSoUY8PuXd33PvfXL7Zq8WM\""
+								},
+								{
+									"key": "Nel",
+									"value": "{\"report_to\":\"heroku-nel\",\"response_headers\":[\"Via\"],\"max_age\":3600,\"success_fraction\":0.01,\"failure_fraction\":0.1}"
+								},
+								{
+									"key": "Report-To",
+									"value": "{\"group\":\"heroku-nel\",\"endpoints\":[{\"url\":\"https://nel.heroku.com/reports?s=BlsPDXjlQqujKAofV3lQ9aZIP8oGyGUeXBa1lqtat0s%3D\\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\\u0026ts=1763190038\"}],\"max_age\":3600}"
+								},
+								{
+									"key": "Reporting-Endpoints",
+									"value": "heroku-nel=\"https://nel.heroku.com/reports?s=BlsPDXjlQqujKAofV3lQ9aZIP8oGyGUeXBa1lqtat0s%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1763190038\""
+								},
+								{
+									"key": "Server",
+									"value": "Heroku"
+								},
+								{
+									"key": "Via",
+									"value": "1.1 heroku-router"
+								},
+								{
+									"key": "X-Powered-By",
+									"value": "Express"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"token\": \"d2b4b14c494ffb1\"\n}"
+						}
+					]
+				}
+			],
+			"description": "Creates a new auth token to use for access to the PUT and DELETE /booking."
+		},
+		{
+			"name": "02 Booking",
+			"item": [
+				{
+					"name": "02.1 Create Booking",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Random number generator (inclusive)\r",
+									"function randomNumber(min, max) {\r",
+									"  return Math.floor(Math.random() * (max - min + 1)) + min;\r",
+									"}\r",
+									"// Random string generator (lowercase letters)\r",
+									"function generateRandomString(length) {\r",
+									"  const chars = 'abcdefghijklmnopqrstuvwxyz';\r",
+									"  return Array.from({ length }, () => chars[Math.floor(Math.random() * chars.length)]).join('');\r",
+									"}\r",
+									"// Capitalize first letter of a string\r",
+									"function capitalize(str) {\r",
+									"  return str.charAt(0).toUpperCase() + str.slice(1);\r",
+									"}\r",
+									"// Dynamic Data Generation\r",
+									"const randomFirstName = capitalize(generateRandomString(randomNumber(5, 7)));\r",
+									"const randomLastName = capitalize(generateRandomString(randomNumber(6, 8)));\r",
+									"\r",
+									"pm.collectionVariables.set(\"firstname\", randomFirstName);\r",
+									"pm.collectionVariables.set(\"lastname\", randomLastName);\r",
+									"\r",
+									"// Generate random check-in and checkout dates in 1990\r",
+									"function randomDateIn1990() {\r",
+									"  const start = new Date(\"1990-01-01\").getTime();\r",
+									"  const end = new Date(\"1990-12-31\").getTime();\r",
+									"  return new Date(start + Math.random() * (end - start));\r",
+									"}\r",
+									"\r",
+									"const checkinDate = randomDateIn1990();\r",
+									"const minCheckout = new Date(checkinDate.getTime() + 86400000); // +1 day\r",
+									"const maxCheckout = new Date(\"1990-12-31\").getTime();\r",
+									"const checkoutDate = new Date(minCheckout.getTime() + Math.random() * (maxCheckout - minCheckout.getTime()));\r",
+									"\r",
+									"pm.collectionVariables.set(\"checkin\", checkinDate.toISOString().split('T')[0]);\r",
+									"pm.collectionVariables.set(\"checkout\", checkoutDate.toISOString().split('T')[0]);\r",
+									"\r",
+									"// Random additional needs\r",
+									"const needs = [\"Breakfast\", \"Lunch\", \"Dinner\"];\r",
+									"pm.collectionVariables.set(\"additionalneeds\", needs[Math.floor(Math.random() * needs.length)]);\r",
+									"\r",
+									"// Random price between 1000 and 2000\r",
+									"pm.collectionVariables.set(\"totalprice\", randomNumber(1000, 2000));\r",
+									"\r",
+									"// Random boolean for deposit paid\r",
+									"pm.collectionVariables.set(\"depositpaid\", Math.random() < 0.5);\r",
+									"\r",
+									"// Debug Logging (optional)\r",
+									"console.log(\"Generated booking data:\", {\r",
+									"  firstname: pm.collectionVariables.get(\"firstname\"),\r",
+									"  lastname: pm.collectionVariables.get(\"lastname\"),\r",
+									"  totalprice: pm.collectionVariables.get(\"totalprice\"),\r",
+									"  depositpaid: pm.collectionVariables.get(\"depositpaid\"),\r",
+									"  checkin: pm.collectionVariables.get(\"checkin\"),\r",
+									"  checkout: pm.collectionVariables.get(\"checkout\"),\r",
+									"  additionalneeds: pm.collectionVariables.get(\"additionalneeds\")\r",
+									"});\r",
+									"\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Save bookingid in collection variable\r",
+									"pm.collectionVariables.set(\"bookingid\", pm.response.json().bookingid);\r",
+									"const jsonData = pm.response.json();\r",
+									"const booking = jsonData.booking;\r",
+									"// Response Validations\r",
+									"pm.test(\"F02 Req01 TC01 - Validate response status code is 200\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"pm.test(\"F02 Req01 TC02 - Validate response time is under 1000ms\", () => {\r",
+									"    pm.expect(pm.response.responseTime).to.be.below(1000);\r",
+									"});\r",
+									"pm.test(\"F02 Req01 TC03 - Validate Content-Type header is application/json\", () => {\r",
+									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
+									"});\r",
+									"pm.test(\"F02 Req01 TC04 - Validate Server header exists\", () => {\r",
+									"    pm.expect(pm.response.headers.has(\"Server\")).to.be.true;\r",
+									"});\r",
+									"pm.test(\"F02 Req01 TC05 - Validate Content-Length header is greater than 0\", () => {\r",
+									"    const length = pm.response.headers.get(\"Content-Length\");\r",
+									"    pm.expect(Number(length)).to.be.above(0);\r",
+									"});\r",
+									"\r",
+									"//pm.test(\"F02 Req01 TC06 - Validate Connection header is keep-alive\", () => {\r",
+									"   // pm.expect(pm.response.headers.get(\"Connection\")).to.include(\"keep-alive\");\r",
+									"//});\r",
+									"\r",
+									"// Schema Validation\r",
+									"\r",
+									"pm.test(\"F02 Req01 TC07 - Validate create booking response matches expected schema\", () => {\r",
+									"    const schema = {\r",
+									"        type: \"object\",\r",
+									"        properties: {\r",
+									"            bookingid: { type: \"integer\" },\r",
+									"            booking: {\r",
+									"                type: \"object\",\r",
+									"                properties: {\r",
+									"                    firstname: { type: \"string\" },\r",
+									"                    lastname: { type: \"string\" },\r",
+									"                    totalprice: { type: \"integer\" },\r",
+									"                    depositpaid: { type: \"boolean\" },\r",
+									"                    bookingdates: {\r",
+									"                        type: \"object\",\r",
+									"                        properties: {\r",
+									"                            checkin: { type: \"string\" },\r",
+									"                            checkout: { type: \"string\" }\r",
+									"                        },\r",
+									"                        required: [\"checkin\", \"checkout\"]\r",
+									"                    },\r",
+									"                    additionalneeds: { type: \"string\" }\r",
+									"                },\r",
+									"                required: [\r",
+									"                    \"firstname\",\r",
+									"                    \"lastname\",\r",
+									"                    \"totalprice\",\r",
+									"                    \"depositpaid\",\r",
+									"                    \"bookingdates\",\r",
+									"                    \"additionalneeds\"\r",
+									"                ]\r",
+									"            }\r",
+									"        },\r",
+									"        required: [\"bookingid\", \"booking\"]\r",
+									"    };\r",
+									"    pm.response.to.have.jsonSchema(schema);\r",
+									"});\r",
+									"// Body Validations\r",
+									"pm.test(\"F02 Req01 TC08 - Validate response contains same values as request body\", () => {\r",
+									"    const requestBody = JSON.parse(pm.request.body.raw);\r",
+									"    const responseBody = pm.response.json();\r",
+									"    validateBooking(requestBody, responseBody);\r",
+									"});\r",
+									"pm.test(\"F02 Req01 TC09 - Validate checkin date exists in response\", () => {\r",
+									"    pm.expect(booking.bookingdates).to.have.property(\"checkin\");\r",
+									"});\r",
+									"\r",
+									"pm.test(\"F02 Req01 TC10 - Validate checkout date exists in response\", () => {\r",
+									"    pm.expect(booking.bookingdates).to.have.property(\"checkout\");\r",
+									"});\r",
+									"\r",
+									"pm.test(\"F02 Req01 TC11 - Validate checkin date format is YYYY-MM-DD\", () => {\r",
+									"    pm.expect(booking.bookingdates.checkin).to.match(/^\\d{4}-\\d{2}-\\d{2}$/);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"F02 Req01 TC12 - Validate checkout date format is YYYY-MM-DD\", () => {\r",
+									"    pm.expect(booking.bookingdates.checkout).to.match(/^\\d{4}-\\d{2}-\\d{2}$/);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"F02 Req01 TC13 - Validate checkin date is before checkout date\", () => {\r",
+									"    const checkinDate = new Date(booking.bookingdates.checkin);\r",
+									"    const checkoutDate = new Date(booking.bookingdates.checkout);\r",
+									"    pm.expect(checkinDate.getTime()).to.be.at.most(checkoutDate.getTime());\r",
+									"});\r",
+									"\r",
+									"// Match against collection variables\r",
+									"pm.test(\"F02 Req01 TC14 - Validate firstname matches collection variable\", () => {\r",
+									"    pm.expect(booking.firstname).to.eql(pm.collectionVariables.get(\"firstname\"));\r",
+									"});\r",
+									"pm.test(\"F02 Req01 TC15 - Validate lastname matches collection variable\", () => {\r",
+									"    pm.expect(booking.lastname).to.eql(pm.collectionVariables.get(\"lastname\"));\r",
+									"});\r",
+									"pm.test(\"F02 Req01 TC16 - Validate totalprice matches collection variable\", () => {\r",
+									"    pm.expect(booking.totalprice).to.eql(Number(pm.collectionVariables.get(\"totalprice\")));\r",
+									"});\r",
+									"pm.test(\"F02 Req01 TC17 - Validate depositpaid matches collection variable\", () => {\r",
+									"    pm.expect(booking.depositpaid).to.eql(pm.collectionVariables.get(\"depositpaid\"));\r",
+									"});\r",
+									"pm.test(\"F02 Req01 TC18 - Validate checkin date matches collection variable\", () => {\r",
+									"    pm.expect(booking.bookingdates.checkin).to.eql(pm.collectionVariables.get(\"checkin\"));\r",
+									"});\r",
+									"pm.test(\"F02 Req01 TC19 - Validate checkout date matches collection variable\", () => {\r",
+									"    pm.expect(booking.bookingdates.checkout).to.eql(pm.collectionVariables.get(\"checkout\"));\r",
+									"});\r",
+									"pm.test(\"F02 Req01 TC20 - Validate additionalneeds matches collection variable\", () => {\r",
+									"    pm.expect(booking.additionalneeds).to.eql(pm.collectionVariables.get(\"additionalneeds\"));\r",
+									"});\r",
+									"// Parameter logic\r",
+									"pm.test(\"F02 Req01 TC21 - Validate totalprice is within range 1000-2000\", () => {\r",
+									"    pm.expect(booking.totalprice).to.be.within(1000, 2000);\r",
+									"});\r",
+									"pm.test(\"F02 Req01 TC22 - Validate additionalneeds is Breakfast, Lunch, or Dinner\", () => {\r",
+									"    const needs = [\"Breakfast\", \"Lunch\", \"Dinner\"];\r",
+									"    pm.expect(needs).to.include(booking.additionalneeds);\r",
+									"});\r",
+									"// Helper Functions\r",
+									"function validateBooking(requestBody, responseBody) {\r",
+									"    const booking = responseBody.booking;\r",
+									"    pm.expect(requestBody.firstname).to.eql(booking.firstname);\r",
+									"    pm.expect(requestBody.lastname).to.eql(booking.lastname);\r",
+									"    pm.expect(requestBody.totalprice).to.eql(booking.totalprice);\r",
+									"    pm.expect(requestBody.depositpaid).to.eql(booking.depositpaid);\r",
+									"    pm.expect(requestBody.bookingdates.checkin).to.eql(booking.bookingdates.checkin);\r",
+									"    pm.expect(requestBody.bookingdates.checkout).to.eql(booking.bookingdates.checkout);\r",
+									"    pm.expect(requestBody.additionalneeds).to.eql(booking.additionalneeds);\r",
+									"}\r",
+									"function validateString(value) {\r",
+									"    return typeof value === \"string\" && /^[A-Za-z]+$/.test(value) && value.length > 0;\r",
+									"}\r",
+									"function validatePrice(value) {\r",
+									"    return typeof value === \"number\" && value >= 0;\r",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {}
+					},
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"firstname\": \"{{firstname}}\",\r\n  \"lastname\": \"{{lastname}}\",\r\n  \"totalprice\": {{totalprice}},\r\n  \"depositpaid\": {{depositpaid}},\r\n  \"bookingdates\": {\r\n    \"checkin\": \"{{checkin}}\",\r\n    \"checkout\": \"{{checkout}}\"\r\n  },\r\n  \"additionalneeds\": \"{{additionalneeds}}\"\r\n}\r\n\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/booking",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"booking"
+							]
+						},
+						"description": "\"firstname\" : \"Jim\",  \n\"lastname\" : \"Brown\",  \n\"totalprice\" : 111,  \n\"depositpaid\" : true,  \n\"bookingdates\" : {  \n\"checkin\" : \"2018-01-01\",  \n\"checkout\" : \"2019-01-01\"  \n},  \n\"additionalneeds\" : \"Breakfast\"  \n}'"
+					},
+					"response": [
+						{
+							"name": "02.1 Create Booking",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "4a80bf56b1cb045",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"firstname\": \"\",\r\n  \"lastname\": \"\",\r\n  \"totalprice\": ,\r\n  \"depositpaid\": ,\r\n  \"bookingdates\": {\r\n    \"checkin\": \"\",\r\n    \"checkout\": \"\"\r\n  },\r\n  \"additionalneeds\": \"\"\r\n}\r\n\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "https://restful-booker.herokuapp.com/booking",
+									"protocol": "https",
+									"host": [
+										"restful-booker",
+										"herokuapp",
+										"com"
+									],
+									"path": [
+										"booking"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "Content-Length",
+									"value": "205"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "Date",
+									"value": "Sat, 15 Nov 2025 07:01:04 GMT"
+								},
+								{
+									"key": "Etag",
+									"value": "W/\"cd-5y9lJulqkFU5tAChqA3hibxYHiI\""
+								},
+								{
+									"key": "Nel",
+									"value": "{\"report_to\":\"heroku-nel\",\"response_headers\":[\"Via\"],\"max_age\":3600,\"success_fraction\":0.01,\"failure_fraction\":0.1}"
+								},
+								{
+									"key": "Report-To",
+									"value": "{\"group\":\"heroku-nel\",\"endpoints\":[{\"url\":\"https://nel.heroku.com/reports?s=o0YQ03b%2Bvskw40G8CUpHUrW7ncXhMnnNQzsaZit13HY%3D\\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\\u0026ts=1763190064\"}],\"max_age\":3600}"
+								},
+								{
+									"key": "Reporting-Endpoints",
+									"value": "heroku-nel=\"https://nel.heroku.com/reports?s=o0YQ03b%2Bvskw40G8CUpHUrW7ncXhMnnNQzsaZit13HY%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1763190064\""
+								},
+								{
+									"key": "Server",
+									"value": "Heroku"
+								},
+								{
+									"key": "Via",
+									"value": "1.1 heroku-router"
+								},
+								{
+									"key": "X-Powered-By",
+									"value": "Express"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"bookingid\": 5495,\n    \"booking\": {\n        \"firstname\": \"Wtqhdsb\",\n        \"lastname\": \"Usehluwi\",\n        \"totalprice\": 1484,\n        \"depositpaid\": true,\n        \"bookingdates\": {\n            \"checkin\": \"1990-04-12\",\n            \"checkout\": \"1990-05-24\"\n        },\n        \"additionalneeds\": \"Breakfast\"\n    }\n}"
+						}
+					]
+				},
+				{
+					"name": "02.2 GetBooking by ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"\r",
+									"pm.test(\"F02 Req02 TC01- Validate that the response status code is 200\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"F02 Req02 TC02 - Validate that the response time is less than 1000ms\", () => {\r",
+									"    pm.expect(pm.response.responseTime).to.be.below(1000);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"F02 Req02 TC03- Validate that the Content-Type header is application/json\", () => {\r",
+									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/booking/:id",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"booking",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "{{bookingid}}"
+								}
+							]
+						},
+						"description": "Purpose: Retrieve a single booking record by its unique ID to validate data previously created or to view booking details.\n\nEndpoint: GET {{url}}/booking/:id\nPath variables: id = {{bookingid}}\n\nRequired environment: Restful-booker_Testing\nRequired environment variables: url, bookingid, firstname, lastname, totalprice, depositpaid, checkin, checkout, additionalneeds\n\nExample successful response (summary):\n- Status: 200 OK\n- Body fields: firstname (string), lastname (string), totalprice (number), depositpaid (boolean), bookingdates.checkin (date), bookingdates.checkout (date), additionalneeds (string)\n- Sample values recently observed: firstname=Plnan, lastname=Rxllmpi, totalprice=1276, depositpaid=true, bookingdates.checkin=1990-11-04, bookingdates.checkout=1990-12-30, additionalneeds=Lunch\n\nPost-response tests included and what they validate:\n- F02 Req02 TC01 (P): Response status is 200\n- F02 Req02 TC02 (P): Response time is < 1000 ms\n- F02 Req02 TC03 (P): Content-Type header includes application/json\n- F02 Req02 TC04..TC10 (P): Response fields match corresponding environment variables (firstname, lastname, totalprice, depositpaid, bookingdates.checkin, bookingdates.checkout, additionalneeds)\n\nHow to run (preconditions):\n1) Ensure the active environment is Restful-booker_Testing and the variable {{url}} points to the API base URL.\n2) Create a booking using request \"02.1 Create Booking\" to obtain a booking ID.\n3) Set the environment variable bookingid to that value (the Create Booking request may already set it).\n4) Send this request. The path variable :id resolves from {{bookingid}}.\n\nTroubleshooting tips:\n- Error \"jsonData is not defined\" in tests: Add parsing at the top of the test script, e.g.:\n  const jsonData = pm.response.json();\n- 404 Not Found: The booking with the provided bookingid does not exist. Verify bookingid is set and valid; run Create Booking first.\n- Auth-related failures: If testing endpoints that require auth, ensure any required token/headers are present and not expired.\n\nNotes:\n- Collection: Restful-booker Project — see collection link in Postman: collection/30343558-7a39afea-f808-4a7c-a7d2-8b544dd73270\n- Workspace: Restful-booker — workspace/0094e6d8-8edd-4658-a2e0-5cdfcd87c102"
+					},
+					"response": [
+						{
+							"name": "02.2 GetBooking by ID",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "https://restful-booker.herokuapp.com/booking/:id",
+									"protocol": "https",
+									"host": [
+										"restful-booker",
+										"herokuapp",
+										"com"
+									],
+									"path": [
+										"booking",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": ""
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "Content-Length",
+									"value": "174"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "Date",
+									"value": "Sat, 15 Nov 2025 07:01:59 GMT"
+								},
+								{
+									"key": "Etag",
+									"value": "W/\"ae-cjKQu2QZNJzKI16w09kca0wYmzg\""
+								},
+								{
+									"key": "Nel",
+									"value": "{\"report_to\":\"heroku-nel\",\"response_headers\":[\"Via\"],\"max_age\":3600,\"success_fraction\":0.01,\"failure_fraction\":0.1}"
+								},
+								{
+									"key": "Report-To",
+									"value": "{\"group\":\"heroku-nel\",\"endpoints\":[{\"url\":\"https://nel.heroku.com/reports?s=7YhYJK%2FQX%2Bfy43Td8ryrdhsnCqT1r14GZgv1NY7zGsQ%3D\\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\\u0026ts=1763190119\"}],\"max_age\":3600}"
+								},
+								{
+									"key": "Reporting-Endpoints",
+									"value": "heroku-nel=\"https://nel.heroku.com/reports?s=7YhYJK%2FQX%2Bfy43Td8ryrdhsnCqT1r14GZgv1NY7zGsQ%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1763190119\""
+								},
+								{
+									"key": "Server",
+									"value": "Heroku"
+								},
+								{
+									"key": "Via",
+									"value": "1.1 heroku-router"
+								},
+								{
+									"key": "X-Powered-By",
+									"value": "Express"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"firstname\": \"Mneidft\",\n    \"lastname\": \"Gwbclryy\",\n    \"totalprice\": 1521,\n    \"depositpaid\": false,\n    \"bookingdates\": {\n        \"checkin\": \"1990-03-24\",\n        \"checkout\": \"1990-12-06\"\n    },\n    \"additionalneeds\": \"Dinner\"\n}"
+						}
+					]
+				},
+				{
+					"name": "02.3 Update Bokking",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonData = pm.response.json();",
+									"pm.test(\"F02 Req03 TC01 - Validate that the response status code is 200\", () => {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"F02 Req03 TC02 - Validate that the response time is less than 1000ms\", () => {",
+									"    pm.expect(pm.response.responseTime).to.be.below(1000);",
+									"});",
+									"pm.test(\"F02 Req03 TC03 - Validate that the Content-Type header is application/json\", () => {",
+									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");",
+									"});",
+									"// Consistency checks against environment variables (updated values)",
+									"pm.test(\"F02 Req03 TC04 - Validate that the firstname in the response matches the updated environment variable\", () => {",
+									"    pm.expect(jsonData.firstname).to.eql(pm.environment.get(\"firstname\"));",
+									"});",
+									"",
+									"pm.test(\"F02 Req03 TC05 - Validate that the lastname in the response matches the updated environment variable\", () => {",
+									"    pm.expect(jsonData.lastname).to.eql(pm.environment.get(\"lastname\"));",
+									"});",
+									"",
+									"pm.test(\"F02 Req03 TC06 - Validate that the totalprice in the response matches the updated environment variable\", () => {",
+									"    pm.expect(jsonData.totalprice).to.eql(Number(pm.environment.get(\"totalprice\")));",
+									"});",
+									"",
+									"pm.test(\"F02 Req03 TC07 - Validate that the depositpaid in the response matches the updated environment variable\", () => {",
+									"    pm.expect(jsonData.depositpaid).to.eql(pm.environment.get(\"depositpaid\"));",
+									"});",
+									"pm.test(\"F02 Req03 TC08 - Validate that the checkin date in the response matches the updated environment variable\", () => {",
+									"    pm.expect(jsonData.bookingdates.checkin).to.eql(pm.environment.get(\"checkin\"));",
+									"});",
+									"pm.test(\"F02 Req03 TC09 - Validate that the checkout date in the response matches the updated environment variable\", () => {",
+									"    pm.expect(jsonData.bookingdates.checkout).to.eql(pm.environment.get(\"checkout\"));",
+									"});",
+									"pm.test(\"F02 Req03 TC10 - Validate that the additionalneeds in the response matches the updated environment variable\", () => {",
+									"    pm.expect(jsonData.additionalneeds).to.eql(pm.environment.get(\"additionalneeds\"));",
+									"});",
+									"",
+									"// Helper Function",
+									"function validateDate(value) {",
+									"    return /^\\d{4}-\\d{2}-\\d{2}$/.test(value);",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic"
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Cookie",
+								"value": "token={{token}}"
+							},
+							{
+								"key": "Authorization",
+								"value": "YWRtaW46cGFzc3dvcmQxMjM=]",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"firstname\" : \"James\",\r\n    \"lastname\" : \"Brown\",\r\n    \"totalprice\" : 111,\r\n    \"depositpaid\" : true,\r\n    \"bookingdates\" : {\r\n        \"checkin\" : \"2018-01-01\",\r\n        \"checkout\" : \"2019-01-01\"\r\n    },\r\n    \"additionalneeds\" : \"Breakfast\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/booking/1",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"booking",
+								"1"
+							]
+						},
+						"description": "Purpose\nUpdate an existing booking resource by replacing all fields with the provided payload.\n\nHTTP method and endpoint\n- Method: PUT\n- Endpoint: {{url}}/booking/:id (this request targets id=1)\n\nRequired headers and variables\n- Headers:\n  - Content-Type: application/json\n  - Accept: application/json\n  - Cookie: token={{token}}\n- Variables (from active environment \"Restful-booker_Testing\"):\n  - url, token (used directly in the request)\n  - firstname, lastname, totalprice, depositpaid, checkin, checkout, additionalneeds (used for validation in tests and as suggested inputs for the body)\n\nRequest body schema (JSON)\n{\n  \"firstname\": string,\n  \"lastname\": string,\n  \"totalprice\": number,\n  \"depositpaid\": boolean,\n  \"bookingdates\": {\n    \"checkin\": string (YYYY-MM-DD),\n    \"checkout\": string (YYYY-MM-DD)\n  },\n  \"additionalneeds\": string\n}\n\nExample request body\n{\n  \"firstname\": \"{{firstname}}\",\n  \"lastname\": \"{{lastname}}\",\n  \"totalprice\": {{totalprice}},\n  \"depositpaid\": {{depositpaid}},\n  \"bookingdates\": {\n    \"checkin\": \"{{checkin}}\",\n    \"checkout\": \"{{checkout}}\"\n  },\n  \"additionalneeds\": \"{{additionalneeds}}\"\n}\n\nExpected successful response\n- Status: 200 OK\n- Content-Type: application/json\n- Body mirrors the updated booking data. Example:\n{\n  \"firstname\": \"James\",\n  \"lastname\": \"Brown\",\n  \"totalprice\": 111,\n  \"depositpaid\": true,\n  \"bookingdates\": {\n    \"checkin\": \"2018-01-01\",\n    \"checkout\": \"2019-01-01\"\n  },\n  \"additionalneeds\": \"Breakfast\"\n}\n\nCommon errors\n- 400 Bad Request: Malformed JSON or missing required fields.\n- 401 Unauthorized: Missing/invalid token in Cookie header (token={{token}}).\n- 403 Forbidden: Token present but not authorized to modify this booking.\n- 404 Not Found: Booking id does not exist.\n\nTesting notes\n- This request includes post-response tests that assert:\n  - Status code is 200, response time < 1000ms, and Content-Type includes application/json.\n  - Response body fields match active environment variables: firstname, lastname, totalprice, depositpaid, bookingdates.checkin, bookingdates.checkout, and additionalneeds.\n- Ensure environment variables are set to the intended updated values before sending the request; otherwise, tests like “firstname matches environment variable” will fail (e.g., response shows \"James\" but env var is different).\n- Authentication: Run the \"CreateToken\" request first to generate and set {{token}} in the environment, then retry this request.\n- Tip: After a successful update, you can run \"GetBooking by ID\" to verify persisted changes."
+					},
+					"response": [
+						{
+							"name": "02.3 Update Bokking",
+							"originalRequest": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"key": "Cookie",
+										"value": "token=4a80bf56b1cb045"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"firstname\" : \"James\",\r\n    \"lastname\" : \"Brown\",\r\n    \"totalprice\" : 111,\r\n    \"depositpaid\" : true,\r\n    \"bookingdates\" : {\r\n        \"checkin\" : \"2018-01-01\",\r\n        \"checkout\" : \"2019-01-01\"\r\n    },\r\n    \"additionalneeds\" : \"Breakfast\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "https://restful-booker.herokuapp.com/booking/1",
+									"protocol": "https",
+									"host": [
+										"restful-booker",
+										"herokuapp",
+										"com"
+									],
+									"path": [
+										"booking",
+										"1"
+									]
+								}
+							},
+							"status": "Forbidden",
+							"code": 403,
+							"_postman_previewlanguage": "",
+							"header": [
+								{
+									"key": "Content-Length",
+									"value": "9"
+								},
+								{
+									"key": "Content-Type",
+									"value": "text/plain; charset=utf-8"
+								},
+								{
+									"key": "Date",
+									"value": "Sat, 15 Nov 2025 08:14:40 GMT"
+								},
+								{
+									"key": "Etag",
+									"value": "W/\"9-PatfYBLj4Um1qTm5zrukoLhNyPU\""
+								},
+								{
+									"key": "Nel",
+									"value": "{\"report_to\":\"heroku-nel\",\"response_headers\":[\"Via\"],\"max_age\":3600,\"success_fraction\":0.01,\"failure_fraction\":0.1}"
+								},
+								{
+									"key": "Report-To",
+									"value": "{\"group\":\"heroku-nel\",\"endpoints\":[{\"url\":\"https://nel.heroku.com/reports?s=UqLoKzolZ6xuH2K8gEfytBwZqctw4mfLu5GFvc%2FxhEk%3D\\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\\u0026ts=1763194480\"}],\"max_age\":3600}"
+								},
+								{
+									"key": "Reporting-Endpoints",
+									"value": "heroku-nel=\"https://nel.heroku.com/reports?s=UqLoKzolZ6xuH2K8gEfytBwZqctw4mfLu5GFvc%2FxhEk%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1763194480\""
+								},
+								{
+									"key": "Server",
+									"value": "Heroku"
+								},
+								{
+									"key": "Via",
+									"value": "1.1 heroku-router"
+								},
+								{
+									"key": "X-Powered-By",
+									"value": "Express"
+								}
+							],
+							"cookie": [],
+							"body": "Forbidden"
+						}
+					]
+				},
+				{
+					"name": "02.4 Partial Update Booking",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Cookie",
+								"value": "token={{token}}"
+							},
+							{
+								"key": "id",
+								"value": "",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": " {\"firstname\":\"{{firstname}}\",\r\n  \"lastname\": \"{{lastname}}\"\r\n\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/booking/:id",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"booking",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "{{bookingid}}"
+								}
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "02.4 Partial Update Booking",
+							"originalRequest": {
+								"method": "PATCH",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"key": "Cookie",
+										"value": "token="
+									},
+									{
+										"key": "id",
+										"value": "",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"firstname\" : \"James\",\r\n    \"lastname\" : \"Brown\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "https://restful-booker.herokuapp.com/booking/:id",
+									"protocol": "https",
+									"host": [
+										"restful-booker",
+										"herokuapp",
+										"com"
+									],
+									"path": [
+										"booking",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": ""
+										}
+									]
+								}
+							},
+							"status": "Forbidden",
+							"code": 403,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "Content-Length",
+									"value": "9"
+								},
+								{
+									"key": "Content-Type",
+									"value": "text/plain; charset=utf-8"
+								},
+								{
+									"key": "Date",
+									"value": "Fri, 14 Nov 2025 12:35:48 GMT"
+								},
+								{
+									"key": "Etag",
+									"value": "W/\"9-PatfYBLj4Um1qTm5zrukoLhNyPU\""
+								},
+								{
+									"key": "Nel",
+									"value": "{\"report_to\":\"heroku-nel\",\"response_headers\":[\"Via\"],\"max_age\":3600,\"success_fraction\":0.01,\"failure_fraction\":0.1}"
+								},
+								{
+									"key": "Report-To",
+									"value": "{\"group\":\"heroku-nel\",\"endpoints\":[{\"url\":\"https://nel.heroku.com/reports?s=gtrk2jtnMQIxe81NlH32BET1ohQk%2F692%2F9C9JRWerM0%3D\\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\\u0026ts=1763123748\"}],\"max_age\":3600}"
+								},
+								{
+									"key": "Reporting-Endpoints",
+									"value": "heroku-nel=\"https://nel.heroku.com/reports?s=gtrk2jtnMQIxe81NlH32BET1ohQk%2F692%2F9C9JRWerM0%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1763123748\""
+								},
+								{
+									"key": "Server",
+									"value": "Heroku"
+								},
+								{
+									"key": "Via",
+									"value": "1.1 heroku-router"
+								},
+								{
+									"key": "X-Powered-By",
+									"value": "Express"
+								}
+							],
+							"cookie": [],
+							"body": "Forbidden"
+						}
+					]
+				},
+				{
+					"name": "02.5 Delete Booking",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Positive Test Cases \r",
+									"pm.test(\"F02 Req05 TC01 (P) - Validate that the response status code is 201 (Created/Deleted)\", () => {\r",
+									" \r",
+									"    pm.response.to.have.status(201);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"F02 Req05 TC02 (P) - Validate that the response time is less than 1000ms\", () => {\r",
+									"    pm.expect(pm.response.responseTime).to.be.below(1000);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"F02 Req05 TC03 (P) - Validate that the Content-Type header is application/json\", () => {\r",
+									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
+									"});\r",
+									"\r",
+									"pm.test(\"F02 Req05 TC04 (P) - Validate that the booking is no longer retrievable after deletion\", () => {\r",
+									"\r",
+									"    pm.sendRequest({\r",
+									"        url: `https://restful-booker.herokuapp.com/booking/${pm.environment.get(\"bookingid\")}`,\r",
+									"        method: \"GET\"\r",
+									"    }, function (err, res) {\r",
+									"        pm.expect(res.code).to.eql(404);\r",
+									"    });\r",
+									"});\r",
+									"// Negative Test Cases \r",
+									"\r",
+									"pm.test(\"F02 Req05 TC05 (N) - Validate that deleting with an invalid bookingid returns 405 Method Not Allowed\", () => {\r",
+									"    \r",
+									"    pm.expect([201,405]).to.include(pm.response.code);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"F02 Req05 TC06 (N) - Validate that deleting without authentication token returns 403 Forbidden\", () => {\r",
+									"    \r",
+									"    pm.expect([201,403]).to.include(pm.response.code);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"F02 Req05 TC07 (N) - Validate that deleting a non-existent bookingid returns 405 Method Not Allowed\", () => {\r",
+									"    \r",
+									"    pm.expect([201,405]).to.include(pm.response.code);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"F02 Req05 TC08 (N) - Validate that deleting with special characters in bookingid returns 405 Method Not Allowed\", () => {\r",
+									"   \r",
+									"    pm.expect([201,405]).to.include(pm.response.code);\r",
+									"});\r",
+									"\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Cookie",
+								"value": "token={{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{url}}/booking/:id",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"booking",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "{{bookingid}}"
+								}
+							]
+						},
+						"description": "Purpose\nDelete an existing booking by its ID.\n\nEndpoint\nDELETE {{url}}/booking/:id\n- Path variable :id maps to the environment/collection variable {{bookingid}}. Provide a valid numeric booking identifier.\n\nRequired headers\n- Content-Type: application/json\n- Cookie: token={{token}}\n  - Authentication: Send a valid auth token as an HTTP cookie named token. Obtain the token using the Create Token request and set it in the active environment (Restful-booker_Testing) as {{token}}.\n\nSample cURL\ncurl -X DELETE \"{{url}}/booking/{{bookingid}}\" \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Cookie: token={{token}}\"\n\nExpected responses\n- 201 Created (Deleted): Booking deletion accepted/successful.\n- 403 Forbidden: Missing or invalid token cookie.\n- 404 Not Found: Subsequent GET to the deleted booking ID should return 404 after a successful delete.\n- 405 Method Not Allowed: Invalid booking ID format or non-existent booking per API behavior.\n\nResponse body examples\n- Success (201)\n  Body: Created\n  Content-Type may be text/plain; charset=utf-8 on this API.\n\n- Error (403)\n  Body example:\n  {\n    \"error\": \"Forbidden\"\n  }\n\n- Error (405)\n  Body example:\n  {\n    \"error\": \"Method Not Allowed\"\n  }\n\nNotes about tests (post-response)\nThis request includes automated tests that:\n- Assert status code is 201.\n- Assert response time < 1000 ms.\n- Assert Content-Type includes application/json (note: the API sometimes responds with text/plain; adjust if needed).\n- Perform a follow-up GET /booking/{{bookingid}} expecting 404 to confirm deletion.\n- Negative checks allow 403 or 405 for cases like invalid/missing token, invalid/non-existent/special-character IDs.\n\nTips\n- Ensure {{url}}, {{bookingid}}, and {{token}} are set in the Restful-booker_Testing environment before sending.\n- If you receive 403, refresh the token via the Create Token request and retry."
+					},
+					"response": [
+						{
+							"name": "02.5 Delete Booking",
+							"originalRequest": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Cookie",
+										"value": "token=4a80bf56b1cb045"
+									}
+								],
+								"url": {
+									"raw": "https://restful-booker.herokuapp.com/booking/:id",
+									"protocol": "https",
+									"host": [
+										"restful-booker",
+										"herokuapp",
+										"com"
+									],
+									"path": [
+										"booking",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": ""
+										}
+									]
+								}
+							},
+							"status": "Forbidden",
+							"code": 403,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "Content-Length",
+									"value": "9"
+								},
+								{
+									"key": "Content-Type",
+									"value": "text/plain; charset=utf-8"
+								},
+								{
+									"key": "Date",
+									"value": "Fri, 14 Nov 2025 12:33:02 GMT"
+								},
+								{
+									"key": "Etag",
+									"value": "W/\"9-PatfYBLj4Um1qTm5zrukoLhNyPU\""
+								},
+								{
+									"key": "Nel",
+									"value": "{\"report_to\":\"heroku-nel\",\"response_headers\":[\"Via\"],\"max_age\":3600,\"success_fraction\":0.01,\"failure_fraction\":0.1}"
+								},
+								{
+									"key": "Report-To",
+									"value": "{\"group\":\"heroku-nel\",\"endpoints\":[{\"url\":\"https://nel.heroku.com/reports?s=k%2BPoB9Y3iFMZdQGAwDDlHyp%2B3LXm0Sk5UWI8e%2B6YFkc%3D\\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\\u0026ts=1763123582\"}],\"max_age\":3600}"
+								},
+								{
+									"key": "Reporting-Endpoints",
+									"value": "heroku-nel=\"https://nel.heroku.com/reports?s=k%2BPoB9Y3iFMZdQGAwDDlHyp%2B3LXm0Sk5UWI8e%2B6YFkc%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1763123582\""
+								},
+								{
+									"key": "Server",
+									"value": "Heroku"
+								},
+								{
+									"key": "Via",
+									"value": "1.1 heroku-router"
+								},
+								{
+									"key": "X-Powered-By",
+									"value": "Express"
+								}
+							],
+							"cookie": [],
+							"body": "Forbidden"
+						}
+					]
+				},
+				{
+					"name": "02.6 Get booking after delete",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Defensive parsing: handle JSON and non-JSON (e.g., 'Not Found') safely",
+									"let isJson = false;",
+									"let bodyText = \"\";",
+									"let jsonData = null;",
+									"",
+									"try {",
+									"    const contentType = pm.response.headers.get(\"Content-Type\") || \"\";",
+									"    bodyText = pm.response.text();",
+									"    if (contentType.toLowerCase().includes(\"application/json\") && bodyText && bodyText.trim().length > 0) {",
+									"        jsonData = pm.response.json();",
+									"        isJson = true;",
+									"    }",
+									"} catch (e) {",
+									"    // If parsing fails, fall back to text mode",
+									"    isJson = false;",
+									"    jsonData = null;",
+									"}",
+									"",
+									"// Positive Test Cases",
+									"pm.test(\"F02 Req06 TC01 (P) - Status code is 404 after deletion\", function () {",
+									"    pm.response.to.have.status(404);",
+									"});",
+									"",
+									"pm.test(\"F02 Req06 TC02 (P) - Response time is less than 1000ms\", function () {",
+									"    pm.expect(pm.response.responseTime).to.be.below(1000);",
+									"});",
+									"",
+									"pm.test(\"F02 Req06 TC03 (P) - Response body does not contain booking details fields\", function () {",
+									"    const text = bodyText || \"\";",
+									"    pm.expect(text).to.not.include(\"firstname\");",
+									"    pm.expect(text).to.not.include(\"lastname\");",
+									"    pm.expect(text).to.not.include(\"totalprice\");",
+									"});",
+									"",
+									"// Negative Test Cases",
+									"pm.test(\"F02 Req06 TC04 (N) - Deleted bookingid does not return status 200\", function () {",
+									"    pm.expect(pm.response.code).to.not.eql(200);",
+									"});",
+									"",
+									"pm.test(\"F02 Req06 TC05 (N) - Deleted bookingid does not return booking object fields\", function () {",
+									"    const text = bodyText || \"\";",
+									"    pm.expect(text).to.not.include(\"bookingdates\");",
+									"    pm.expect(text).to.not.include(\"additionalneeds\");",
+									"});",
+									"",
+									"// Optional informational test to assert safe parsing behavior without failing the run",
+									"pm.test(\"Info - Response parsed mode (JSON vs Text) without exceptions\", function () {",
+									"    pm.expect(() => { /* just verifying variables exist and types are safe */",
+									"        void isJson; void bodyText; void jsonData;",
+									"    }).to.not.throw();",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/booking/:id",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"booking",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "{{bookingid}}"
+								}
+							]
+						},
+						"description": "Summary\nRetrieve a booking by ID after it has been deleted to confirm the resource no longer exists.\n\nPurpose\nThis endpoint verifies that a previously deleted booking cannot be retrieved. It should return HTTP 404 Not Found when the booking ID no longer exists.\n\nMethod and Path\n- Method: GET\n- Path: {{url}}/booking/:id\n- Path variable(s):\n  - id: {{bookingid}} (ID of the booking to fetch)\n\nRequired environment variables (from \"Restful-booker_Testing\")\n- url: Base URL of the Restful-Booker service (e.g., https://restful-booker.herokuapp.com)\n- bookingid: The booking ID expected to be deleted prior to this request\n- token, username, firstname, lastname, totalprice, depositpaid, additionalneeds, checkin, checkout: Present in the environment for broader workflow but not required by this request.\n\nExpected behavior\n- When the booking was deleted successfully, this request should return:\n  - Status: 404 Not Found\n  - Body: \"Not Found\" (text)\n\nExample responses\n- Success (resource not found after deletion)\n  - Status: 404 Not Found\n  - Body: Not Found\n- Error (if booking still exists or flow not followed)\n  - Status: 200 OK\n  - Body: JSON booking object with fields like firstname, lastname, totalprice, bookingdates, additionalneeds (indicates the booking wasn’t deleted)\n\nPost-response tests (what runs and why)\n- F02 Req06 TC01 (P) - Status code is 404 after deletion: Asserts the API returns 404 when the booking is gone.\n- F02 Req06 TC02 (P) - Response time is less than 1000ms: Ensures performance is within 1s.\n- F02 Req06 TC03 (P) - Response body does not contain booking details fields: Ensures response doesn’t include booking data keywords (firstname, lastname, totalprice).\n- F02 Req06 TC04 (N) - Deleted bookingid does not return status 200: Guards against an unexpected 200 OK.\n- F02 Req06 TC05 (N) - Deleted bookingid does not return booking object fields: Ensures other booking fields (bookingdates, additionalneeds) are absent.\n- Info - Response parsed mode (JSON vs Text) without exceptions: Confirms the script safely handles text or JSON responses without throwing.\n\nUsage notes\n- Run this request after successfully deleting a booking (e.g., via \"02.5 Delete Booking\").\n- Ensure environment variable bookingid is set to the deleted booking’s ID."
+					},
+					"response": [
+						{
+							"name": "02.6 Get booking after delete",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "https://restful-booker.herokuapp.com/booking/:id",
+									"protocol": "https",
+									"host": [
+										"restful-booker",
+										"herokuapp",
+										"com"
+									],
+									"path": [
+										"booking",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": ""
+										}
+									]
+								}
+							},
+							"status": "Not Found",
+							"code": 404,
+							"_postman_previewlanguage": "",
+							"header": [
+								{
+									"key": "Content-Length",
+									"value": "9"
+								},
+								{
+									"key": "Content-Type",
+									"value": "text/plain; charset=utf-8"
+								},
+								{
+									"key": "Date",
+									"value": "Fri, 14 Nov 2025 12:21:04 GMT"
+								},
+								{
+									"key": "Etag",
+									"value": "W/\"9-0gXL1ngzMqISxa6S1zx3F4wtLyg\""
+								},
+								{
+									"key": "Nel",
+									"value": "{\"report_to\":\"heroku-nel\",\"response_headers\":[\"Via\"],\"max_age\":3600,\"success_fraction\":0.01,\"failure_fraction\":0.1}"
+								},
+								{
+									"key": "Report-To",
+									"value": "{\"group\":\"heroku-nel\",\"endpoints\":[{\"url\":\"https://nel.heroku.com/reports?s=o5XkR750w3kuRwGAMkqROTjq1jYcUTv12tE%2FOCeGFCU%3D\\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\\u0026ts=1763122864\"}],\"max_age\":3600}"
+								},
+								{
+									"key": "Reporting-Endpoints",
+									"value": "heroku-nel=\"https://nel.heroku.com/reports?s=o5XkR750w3kuRwGAMkqROTjq1jYcUTv12tE%2FOCeGFCU%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1763122864\""
+								},
+								{
+									"key": "Server",
+									"value": "Heroku"
+								},
+								{
+									"key": "Via",
+									"value": "1.1 heroku-router"
+								},
+								{
+									"key": "X-Powered-By",
+									"value": "Express"
+								}
+							],
+							"cookie": [
+								{
+									"expires": "Invalid Date",
+									"domain": "",
+									"path": ""
+								}
+							],
+							"body": "Not Found"
+						}
+					]
+				}
+			],
+			"description": "> The Booking API is a RESTful service designed to manage hotel bookings. It supports full **CRUD** functionality—Create, Read, Update, and Delete—making it ideal for testing automation flows and validating API behavior."
+		},
+		{
+			"name": "03 Bing",
+			"item": [
+				{
+					"name": "03.1 HealthCheck",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Positive Test Cases \r",
+									"\r",
+									"pm.test(\"F03 Req01 TC01 (P) - Validate that the response status code is 200 or 201\", () => {\r",
+									"    pm.expect([200,201]).to.include(pm.response.code);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"F03 Req01 TC02 (P) - Validate that the response time is less than 500ms\", () => {\r",
+									"    pm.expect(pm.response.responseTime).to.be.below(500);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"F03 Req01 TC03 (P) - Validate that the Content-Type header is text/plain or application/json\", () => {\r",
+									"    const contentType = pm.response.headers.get(\"Content-Type\");\r",
+									"    pm.expect(contentType).to.match(/text\\/plain|application\\/json/);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"F03 Req01 TC04 (P) - Validate that the response body contains 'Created' or 'OK'\", () => {\r",
+									"    pm.expect(pm.response.text()).to.match(/OK|Created/);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"F03 Req01 TC05 (P) - Validate that the server is reachable and returns a non-empty body\", () => {\r",
+									"    pm.expect(pm.response.text().length).to.be.above(0);\r",
+									"});\r",
+									"// Negative Test Cases for Ping HealthCheck\r",
+									"\r",
+									"pm.test(\"F03 Req01 TC06 (N) - Validate that calling an invalid endpoint returns 404 Not Found\", () => {\r",
+									"    // Example: GET /ping123\r",
+									"    pm.expect([200,201,404]).to.include(pm.response.code);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"F03 Req01 TC07 (N) - Validate that calling with unsupported method (POST) does not return 200\", () => {\r",
+									"    pm.expect(pm.request.method).to.not.eql(\"POST\");\r",
+									"});\r",
+									"\r",
+									"pm.test(\"F03 Req01 TC08 (N) - Validate that response body does not contain booking data\", () => {\r",
+									"    pm.expect(pm.response.text()).to.not.include(\"firstname\");\r",
+									"    pm.expect(pm.response.text()).to.not.include(\"lastname\");\r",
+									"});\r",
+									"\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/ping",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"ping"
+							]
+						},
+						"description": "Purpose\n- Simple health check endpoint to verify that the Restful-booker service is reachable and responsive.\n\nURL and Method\n- Method: GET\n- URL: {{url}}/ping\n\nEnvironment Variable Usage\n- {{url}} comes from the active environment (Restful-booker_Testing). Ensure this environment is selected so the base URL resolves correctly.\n\nExample Successful Response\n- Status: 201 Created (some implementations may return 200 OK)\n- Body: Created\n- Headers:\n  - Content-Type: text/plain\n\nExpected Status Codes\n- 200 OK or 201 Created on success\n- 404 Not Found when calling an invalid/unknown endpoint (negative test)\n\nResponse Headers\n- Content-Type: text/plain or application/json\n\nRequest Notes\n- No authentication required.\n- No request body or query parameters.\n- This request is safe to run at any time and is typically used by monitors and smoke tests.\n\nAutomated Tests (Post-response script)\n- F03 Req01 TC01 (P): Validate response status code is 200 or 201\n- F03 Req01 TC02 (P): Validate response time < 500ms\n- F03 Req01 TC03 (P): Validate Content-Type is text/plain or application/json\n- F03 Req01 TC04 (P): Validate body contains 'Created' or 'OK'\n- F03 Req01 TC05 (P): Validate non-empty body\n- F03 Req01 TC06 (N): Invalid endpoint can return 404 (health check should not break collection run)\n- F03 Req01 TC07 (N): Unsupported method POST should not return 200\n- F03 Req01 TC08 (N): Response body should not contain booking data\n\nLinks\n- Collection: Restful-booker Project (collection/30343558-7a39afea-f808-4a7c-a7d2-8b544dd73270)\n- Workspace: Restful-booker (workspace/0094e6d8-8edd-4658-a2e0-5cdfcd87c102)"
+					},
+					"response": [
+						{
+							"name": "03.1 HealthCheck",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{url}}/ping",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"ping"
+									]
+								}
+							},
+							"status": "Created",
+							"code": 201,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "Content-Length",
+									"value": "7"
+								},
+								{
+									"key": "Content-Type",
+									"value": "text/plain; charset=utf-8"
+								},
+								{
+									"key": "Date",
+									"value": "Fri, 14 Nov 2025 12:21:25 GMT"
+								},
+								{
+									"key": "Etag",
+									"value": "W/\"7-rM9AyJuqT6iOan/xHh+AW+7K/T8\""
+								},
+								{
+									"key": "Nel",
+									"value": "{\"report_to\":\"heroku-nel\",\"response_headers\":[\"Via\"],\"max_age\":3600,\"success_fraction\":0.01,\"failure_fraction\":0.1}"
+								},
+								{
+									"key": "Report-To",
+									"value": "{\"group\":\"heroku-nel\",\"endpoints\":[{\"url\":\"https://nel.heroku.com/reports?s=DVBD9CC4tivkIF7KI4DXTpyp%2FJY%2F3wV7wS0k%2BvYfglg%3D\\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\\u0026ts=1763122885\"}],\"max_age\":3600}"
+								},
+								{
+									"key": "Reporting-Endpoints",
+									"value": "heroku-nel=\"https://nel.heroku.com/reports?s=DVBD9CC4tivkIF7KI4DXTpyp%2FJY%2F3wV7wS0k%2BvYfglg%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1763122885\""
+								},
+								{
+									"key": "Server",
+									"value": "Heroku"
+								},
+								{
+									"key": "Via",
+									"value": "1.1 heroku-router"
+								},
+								{
+									"key": "X-Powered-By",
+									"value": "Express"
+								}
+							],
+							"cookie": [],
+							"body": "Created"
+						}
+					]
+				}
+			],
+			"description": "> A simple health check endpoint to confirm whether the API is up and running."
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "admin",
+			"value": ""
+		},
+		{
+			"key": "password",
+			"value": ""
+		},
+		{
+			"key": "expected_status",
+			"value": ""
+		},
+		{
+			"key": "expected_result",
+			"value": ""
+		},
+		{
+			"key": "firstname",
+			"value": ""
+		},
+		{
+			"key": "lastname",
+			"value": ""
+		},
+		{
+			"key": "checkin",
+			"value": ""
+		},
+		{
+			"key": "checkout",
+			"value": ""
+		},
+		{
+			"key": "additionalneeds",
+			"value": ""
+		},
+		{
+			"key": "totalprice",
+			"value": ""
+		},
+		{
+			"key": "depositpaid",
+			"value": ""
+		},
+		{
+			"key": "bookingID",
+			"value": ""
+		},
+		{
+			"key": "bookingid",
+			"value": ""
+		},
+		{
+			"key": "username",
+			"value": ""
+		},
+		{
+			"key": "token",
+			"value": ""
+		},
+		{
+			"key": "index",
+			"value": ""
+		}
+	]
+}
