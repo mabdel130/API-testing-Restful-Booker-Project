@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 🧪 Restful Booker API Testing Project
 
 <img src="https://assets.publish.postman.com/og-image?heading=WORKSPACE&entityName=Restful%20Booker%20Collections&entityType=workspace&imageUrl=https%3A%2F%2Fres.cloudinary.com%2Fpostman%2Fimage%2Fupload%2Ft_team_logo%2Fv1654544603%2Fteam%2F467456b12fa1769ff37861bdf99b338528f85a7c40135e85165ad6280dbd4a35.png&isVerified=false&teamName=Automation%20in%20Testing" alt="Restful Booker Logo" width="600"/>
@@ -67,3 +68,6 @@ You can run the tests in two ways:
 
 - After the test execution, an HTML report will be available in the `newman` folder.
 - If you face permission issues, run the terminal or `.bat` file as an administrator.
+=======
+Api Testing 
+>>>>>>> 03cf2b653d74205e448fe41b75c6f4a2bbd1133c
